@@ -662,7 +662,7 @@ void Runtime::handle_cmd_create(int fd, nlohmann::json &args) {
     pc.enable_clone = true;
     pc.enable_execve = true;
     pc.enable_vdso = true;
-    pc.enable_write_exec = true;
+    //pc.enable_write_exec = true;
     if (!get_config().hook_so.empty()) {
         pc.enable_hook = true;
     }
