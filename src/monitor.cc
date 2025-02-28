@@ -70,13 +70,7 @@ static void init_cpu_profile() {
     offset += 256 - 8;
 #endif
     cpu_profile.xstate_pkru_offset = offset;
-    asm volatile (
-        "movl $0x0d, %%eax\n"
-        "movl $1, %%ecx\n"
-        "cpuid\n"
-        : "=b" (offset) :: "eax", "ecx", "edx"
-    );
-    cpu_profile.xstate_xmm_offset = offset;
+    cpu_profile.xstate_xmm_offset = offsetof(struct _fpstate, _xmm);
     asm volatile (
         "xorl %%ecx, %%ecx\n"
         "xgetbv\n"
@@ -95,19 +89,19 @@ static void init_cpu_profile() {
 
     cpu_profile.xstate_offsets.resize(64);
     cpu_profile.xstate_sizes.resize(64);
-    for (int i = 0; i < 64; ++i) {
+    for (int i = 2; i < 64; ++i) {
         if (!(xcr0 & (1ul << i))) {
             continue;
         }
         int offset;
-        int size = 0x0d;
+        int size;
+        int ecx, edx;
         asm volatile (
-            "movl %0, %%ecx\n"
             "cpuid\n"
-            : "=b" (offset), "+a" (size) : "r" (i) : "ecx", "edx"
+            : "=b" (offset), "=a" (size), "=c" (ecx), "=d" (edx) : "a" (0x0d), "c" (i)
         );
         cpu_profile.xstate_offsets[i] = offset;
-        cpu_profile.xstate_sizes[i] = offset;
+        cpu_profile.xstate_sizes[i] = size;
     }
 }
 
@@ -743,7 +737,7 @@ pid_t VProcess::wait(pid_t pid, int *wstatus, int options) {
                 return -ECHILD;
             }
         } else {
-            auto it = zombie_children.find(tgid);
+            auto it = zombie_children.find(pid);
             if (it != zombie_children.end()) {
                 vprocess = it->second;
                 zombie_children.erase(it);

@@ -123,15 +123,7 @@ out:
     }
     if (!timeout) {
         vthread->set_restart();
-        return -EINTR;
     }
-    FutexWaitRestartFunction func;
-    func.uaddr = uaddr;
-    func.val = val;
-    func.timeout = end;
-    func.timeout_flags = timeout_flags | IORING_TIMEOUT_ABS;
-    func.mask = mask;
-    vthread->set_restart(func);
     return -EINTR;
 }
 

@@ -1298,17 +1298,6 @@ long SyscallHandlers::poll(VThread *vthread, int sysno, const long *args, Syscal
     } catch (std::bad_alloc &e) {
         return -ENOMEM;
     }
-    if (res == -EINTR) {
-        if (timeout == -1) {
-            vthread->set_restart();
-        } else {
-            PollRestartFunction func;
-            func.fds = fds;
-            func.nfds = nfds;
-            func.timeout = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-            vthread->set_restart(func);
-        }
-    }
 
     return res;
 }
@@ -1358,9 +1347,6 @@ long SyscallHandlers::ppoll(VThread *vthread, int sysno, const long *args, Sysca
     } catch (FaultException &e) {
         return res;
     }
-    if (res == -EINTR) {
-        vthread->set_restart();
-    }
     return res;
 }
 
@@ -1403,9 +1389,6 @@ long SyscallHandlers::select(VThread *vthread, int sysno, const long *args, Sysc
         }
     } catch (FaultException &e) {
         return res;
-    }
-    if (res == -EINTR) {
-        vthread->set_restart();
     }
     return res;
 }
@@ -1455,9 +1438,6 @@ long SyscallHandlers::pselect6(VThread *vthread, int sysno, const long *args, Sy
         }
     } catch (FaultException &e) {
         return res;
-    }
-    if (res == -EINTR) {
-        vthread->set_restart();
     }
     return res;
 }
